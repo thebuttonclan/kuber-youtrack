@@ -24,6 +24,29 @@ spec:
         runAsUser: {{ .Values.securityContext.runAsUser }}
         runAsGroup: {{ .Values.securityContext.runAsGroup }}
         fsGroup: {{ .Values.securityContext.fsGroup }}
+      initContainers:
+        - name: "init-{{ .Chart.Name }}"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          command:
+            - /bin/bash
+            - /run.sh
+          args:
+            - configure
+            - -J-Ddisable.configuration.wizard.on.clean.install=true
+            - --listen-port=8443
+            - --base-url=https://youtrack-dev.button.is:8443
+            - --secure-mode=tls
+            - --tls-server-cert-key-file=/opt/youtrack/certs/youtrack-dev.button.is.key
+            - --tls-server-cert-file=/opt/youtrack/certs/youtrack-dev.button.is.cer
+            - --tls-server-cert-chain-file=/opt/youtrack/certs/youtrack-dev.button.is.ca.cer
+          volumeMounts:
+            - name: "{{ include "..fullname" . }}-conf"
+              mountPath: /opt/youtrack/conf
+            - name: tls-certs
+              mountPath: /opt/youtrack/certs
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -31,6 +54,9 @@ spec:
           ports:
             - name: http
               containerPort: 8080
+              protocol: TCP
+            - name: https
+              containerPort: 8443
               protocol: TCP
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
@@ -43,6 +69,12 @@ spec:
               mountPath: /opt/youtrack/logs
             - name: "{{ include "..fullname" . }}-backups"
               mountPath: /opt/youtrack/backups
+            - name: tls-certs
+              mountPath: /opt/youtrack/certs
+      volumes:
+        - name: tls-certs
+          configMap:
+            name: tls-certs
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

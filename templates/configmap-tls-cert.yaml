@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tls-certs
+  labels:
+    app.kubernetes.io/name: {{ include "..name" . }}
+    helm.sh/chart: {{ include "..chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+data:
+  youtrack-dev.button.is.key: |-
+    -----BEGIN RSA PRIVATE KEY-----
+    -----END RSA PRIVATE KEY-----
+  youtrack-dev.button.is.cer: |-
+    -----BEGIN CERTIFICATE-----
+    -----END CERTIFICATE-----
+  youtrack-dev.button.is.ca.cer: |-
+
+    -----BEGIN CERTIFICATE-----
+    -----END CERTIFICATE-----
